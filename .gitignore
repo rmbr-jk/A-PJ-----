@@ -1,0 +1,16 @@
+# GAS 백엔드 파일 (GitHub에 올리지 않음)
+CheckIn_WebAPI.js
+Code.js
+CheckIn.js
+*.gs
+.clasp.json
+
+# 구버전 파일
+UploadPage*.html
+CheckInPage.html
+User삭제.js
+
+# 기타
+.DS_Store
+Thumbs.db
+*.log

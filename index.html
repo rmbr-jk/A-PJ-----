@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>리멤버 방문자 체크인</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background-color: #EDE9E0;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #EDE9E0;
+      z-index: 9999;
+      transition: opacity 0.3s ease-out;
+    }
+
+    #loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #E0DDD5;
+      border-top-color: #FF5414;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      margin-top: 20px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 14px;
+      color: #666;
+    }
+
+    iframe {
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      display: block;
+      background-color: #EDE9E0;
+    }
+
+    /* 모바일 대응 */
+    @media (max-width: 768px) {
+      iframe {
+        height: 100svh; /* Safari 모바일 주소창 고려 */
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 로딩 화면 -->
+  <div id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">체크인 시스템 로딩 중...</div>
+  </div>
+
+  <!-- GAS 페이지 임베드 -->
+  <iframe
+    id="checkinFrame"
+    src="https://script.google.com/macros/s/AKfycbz5wZdEoJrN4Tb-xuOMqcvnhnbQU3qF_SvEdgdRQ7gJ6eP7sQlkE8Vh5QGYHU3bb0dW/exec"
+    allow="camera; microphone"
+    sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-downloads"
+    loading="eager">
+  </iframe>
+
+  <script>
+    // iframe 로드 완료 시 로딩 화면 숨김
+    const iframe = document.getElementById('checkinFrame');
+    const loading = document.getElementById('loading');
+
+    iframe.addEventListener('load', function() {
+      setTimeout(() => {
+        loading.classList.add('hidden');
+      }, 300);
+    });
+
+    // 타임아웃 (5초 후에도 로딩 화면 숨김)
+    setTimeout(() => {
+      loading.classList.add('hidden');
+    }, 5000);
+
+    // PWA 지원을 위한 viewport height 조정
+    function setViewportHeight() {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    window.addEventListener('resize', setViewportHeight);
+    window.addEventListener('orientationchange', setViewportHeight);
+    setViewportHeight();
+  </script>
+</body>
+</html>
