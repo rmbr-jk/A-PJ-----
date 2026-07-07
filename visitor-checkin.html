@@ -647,17 +647,19 @@
     btn.disabled = true;
     btn.innerText = "처리 중...";
 
+    // 서명 이미지를 base64로 변환 (JSONP로 전송하기 위해 압축)
     const signatureDataUrl = signaturePad.toDataURL('image/png');
 
     try {
-      // 서명 이미지는 POST로 전송
-      const result = await callGasAPIPost('processCheckIn', {
-        checkInData: foundVisitor,
+      // JSONP로 서명 데이터 전송
+      const result = await callGasAPI('processCheckIn', {
+        checkInDataJson: JSON.stringify(foundVisitor),
         signatureDataUrl: signatureDataUrl
       });
 
       if (result.success) {
         changeStep('3');
+        setTimeout(() => location.reload(), 3000); // 3초 후 자동 새로고침
       } else {
         btn.disabled = false;
         btn.innerText = "서명 완료 및 체크인";
@@ -668,6 +670,7 @@
       btn.disabled = false;
       btn.innerText = "서명 완료 및 체크인";
       alert("오류가 발생했습니다. 다시 시도해 주세요.");
+      console.error('체크인 에러:', error);
     }
   }
 
