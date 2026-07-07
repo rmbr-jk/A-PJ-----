@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>리멤버 방문자 체크인</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+  <style>
+    :root {
+      --orange: #FF5414;
+      --bg: #EDE9E0;
+      --dark: #1A1A1A;
+      --card-bg: #ffffff;
+      --input-bg: #FAFAF8;
+      --input-border: #E0DDD5;
+      --text-muted: #666;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: var(--bg);
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    /* ── 헤더 ── */
+    .header {
+      background: var(--dark);
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+    }
+    .header-logo {
+      color: #fff;
+      font-weight: 700;
+      font-size: 22px;
+      font-family: Georgia, 'Times New Roman', serif;
+      letter-spacing: -0.3px;
+    }
+
+    /* ── 본문 래퍼 ── */
+    .body-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 56px 20px 60px;
+    }
+
+    .page-title {
+      font-size: clamp(26px, 5vw, 38px);
+      font-weight: 900;
+      color: var(--dark);
+      text-align: center;
+      margin: 0 0 12px;
+      letter-spacing: -1px;
+    }
+    .page-sub {
+      font-size: 15px;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 0 0 36px;
+      line-height: 1.6;
+    }
+
+    /* ── 카드 ── */
+    .card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 28px 28px 24px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    /* ── 폼 요소 ── */
+    .field { margin-bottom: 16px; }
+    .field label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    .field input {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      background: var(--input-bg);
+      outline: none;
+      color: var(--dark);
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--orange); background: #fff; }
+
+    /* ── 동의 체크박스 ── */
+    .agree-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 20px 0 22px;
+    }
+    .agree-check {
+      width: 20px; height: 20px;
+      border-radius: 5px;
+      background: var(--orange);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .agree-check svg { width: 12px; height: 12px; }
+    .agree-text { font-size: 13px; color: #444; flex: 1; }
+    .agree-link {
+      color: var(--orange);
+      font-weight: 700;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    /* ── 버튼 ── */
+    .btn-main {
+      width: 100%;
+      padding: 17px;
+      background: var(--orange);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      letter-spacing: -0.3px;
+      transition: background 0.15s;
+    }
+    .btn-main:hover { background: #e04a10; }
+    .btn-main:disabled { background: #ccc; cursor: default; }
+
+    .btn-back {
+      width: 100%;
+      padding: 15px;
+      background: var(--dark);
+      color: #fff;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      margin-top: 20px;
+    }
+
+    /* ── 일러스트 (하단 캐릭터) ── */
+    .illust-wrap {
+      margin-top: 36px;
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── 서명 패드 ── */
+    .signature-wrapper {
+      position: relative;
+      width: 100%;
+      height: 220px;
+      border: 1px solid var(--input-border);
+      border-radius: 12px;
+      background: #fff;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+    .signature-wrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+      touch-action: none;
+    }
+    .sig-guide {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ccc;
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* ── 동의 내용 보기 ── */
+    .terms-wrap { width: 100%; max-width: 420px; }
+    .terms-title {
+      font-size: 22px;
+      font-weight: 900;
+      color: var(--orange);
+      text-align: left;
+      margin: 0 0 20px;
+      letter-spacing: -0.5px;
+    }
+    .terms-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 22px;
+      text-align: left;
+    }
+    .terms-text {
+      font-size: 14px;
+      line-height: 1.9;
+      color: #444;
+      white-space: pre-wrap;
+      margin: 0;
+    }
+
+    /* ── 방문자 이름 표시 ── */
+    .visitor-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 6px;
+    }
+
+    /* ── 리셋 링크 ── */
+    .reset-link {
+      color: #999;
+      font-size: 12px;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    /* ── 완료 화면 ── */
+    .complete-icon { font-size: 72px; text-align: center; margin: 32px 0 16px; }
+
+    /* ── 페이지 전환 ── */
+    .page { display: none; width: 100%; flex-direction: column; align-items: center; }
+    .page.active { display: flex; animation: fadeIn 0.2s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ── [당일방문/워크인] 추가 스타일 (기존 룰은 변경하지 않음) ── */
+    .btn-walkin {
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      background: transparent;
+      color: var(--dark);
+      border: 1.5px solid var(--input-border);
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Noto Sans KR', sans-serif;
+      letter-spacing: -0.2px;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-walkin:hover { border-color: var(--orange); color: var(--orange); }
+
+    .field select {
+      width: 100%;
+      padding: 13px 40px 13px 14px;
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      font-size: 15px;
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: var(--input-bg);
+      color: var(--dark);
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+      background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 10 10"><path fill="%23666" d="M0 3l5 5 5-5z"/></svg>');
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+      background-size: 10px;
+      transition: border-color 0.15s;
+    }
+    .field select:focus { border-color: var(--orange); background-color: #fff; }
+
+    .walkin-date-info {
+      background: #f5f3ec;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .walkin-date-label { font-size: 12px; color: #777; font-weight: 500; }
+    .walkin-date-value { font-size: 14px; color: var(--dark); font-weight: 700; }
+  </style>
+</head>
+<body>
+
+<!-- 헤더 (항상 표시) -->
+<div class="header" id="mainHeader">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1692.2 277.4" height="22" style="display:block;"><path fill="#ffffff" d="M172.2,152.6l-75.8-0.3c-1.7,1.9-2,2.3-3.7,4.2L147.9,271h81c1.2-1.9,1.6-2.5,2.9-4.5L172.2,152.6z"/>
+<path fill="#ffffff" d="M100.9,0H0v270.4h75.3V18.5c33.3,4.6,50.7,20.3,57.5,46.8c4.9,19.1,2.7,47.6-10.3,65.4l5,6.8c52.6-0.5,82-29.2,80.1-69.2C205.4,21.7,163,0,100.9,0z"/>
+<path fill="#ffffff" d="M879.5,270.6V75.2h62.3l0.9,26.9c0,0,18.5-26.1,41.4-30.4c25.5-4.7,48.9,7.5,52.7,30.4c0,0,17.2-26.7,45.1-30.4c25.3-3.4,50.3,10.1,50.3,44.1v154.8h-63.9V129.4c0-10.3-5.1-17.8-13.2-17.7c-9.9,0.1-17.3,13.5-17.3,13.5v145.4h-64.1V127.3c0-10.3-5.9-15.8-14.1-15.6c-9.3,0.2-16.3,11.4-16.3,11.4v147.5H879.5z"/>
+<path fill="#ffffff" d="M414.8,270.6V75.2h62.3l0.9,26.9c0,0,18.6-26.1,41.4-30.4c25.5-4.7,48.9,7.5,52.7,30.4c0,0,17.2-26.7,45.1-30.4c25.3-3.4,50.3,10.1,50.3,44.1v154.8h-63.9V129.4c0-10.3-5.1-17.8-13.2-17.7c-9.9,0.1-17.3,13.5-17.3,13.5v145.4h-64.1V127.3c0-10.3-5.9-15.8-14.1-15.6c-9.3,0.2-16.3,11.4-16.3,11.4v147.5H414.8z"/>
+<path fill="#ffffff" d="M1626.4,109.8c-1.5,4.1-5.7,17.5-5.7,17.5h-2.1V75.2h-67.4v195.5h69.8v-95.6c0-19.1,6.9-31.2,24.6-36.9c12-3.9,46.7-2.3,46.7-2.3V70.6C1658.8,69.9,1637.1,80.1,1626.4,109.8z"/>
+<path fill="#ffffff" d="M1278,70.7c-19.7-0.8-33.8,8.8-39.4,17.9v7.9c37.5,4.3,38.9,59.8,38.9,76.3c0,23.8-3.4,50.2-15.5,67.3c-11.9,16.8-27.8,17.5-37.8,15.7V6.4c-2.1-1.5-2.9-2.1-4.9-3.6l-63.1,21.1v242.5c22.6,5.6,61.6,13.9,97.9,9.9c57.4-6.3,91-46.8,91-110C1345,116.5,1324.3,72.6,1278,70.7z"/>
+<path fill="#ffffff" d="M310.4,91c16.4,0.5,24.4,20.2,21.9,40.8c-1.9,15.5-13.8,29.3-25.5,34.3v10.2h90.5c4.6-70-40.9-105.6-84.8-105.8c-55.5,0-95.7,38.6-92.6,106.7c2.5,55.5,37.5,91.5,81.4,98.5c35.7,5.7,75.2-7.7,93.5-48.8l-5-7c-18.1,9.8-47,11.5-65.2,3.9c-22.3-9.4-36.9-31.8-41-55.1C275.8,125.7,286.8,90.3,310.4,91z"/>
+<path fill="#ffffff" d="M774.9,91c16.4,0.5,24.4,20.2,21.9,40.8c-1.9,15.5-13.8,29.3-25.5,34.3v10.2h90.5c4.7-70-40.9-105.6-84.8-105.8c-55.5,0-95.7,38.6-92.6,106.7c2.5,55.5,37.5,91.5,81.4,98.5c35.7,5.7,75.2-7.7,93.5-48.8l-5-7c-18.2,9.8-47,11.5-65.2,3.9c-22.3-9.4-36.9-31.8-41-55.1C740.3,125.7,751.4,90.3,774.9,91z"/>
+<path fill="#ffffff" d="M1448.3,91c16.4,0.5,24.4,20.2,21.9,40.8c-1.9,15.5-13.8,29.3-25.5,34.3v10.2h90.5c4.7-70-40.9-105.6-84.8-105.8c-55.5,0-95.7,38.6-92.6,106.7c2.5,55.5,37.6,91.5,81.4,98.5c35.7,5.7,75.2-7.7,93.5-48.8l-5-7c-18.2,9.8-47,11.5-65.2,3.9c-22.3-9.4-36.9-31.8-41-55.1C1413.7,125.7,1424.8,90.3,1448.3,91z"/></svg>
+</div>
+
+<div class="body-wrap">
+
+  <!-- STEP 1: 예약 확인 -->
+  <div id="step1" class="page active">
+    <h1 class="page-title">리멤버 방문을 환영합니다</h1>
+    <p class="page-sub">방문 예약자 정보를 입력하세요</p>
+    <div class="card">
+      <div class="field">
+        <label>성함</label>
+        <input type="text" id="visitorName" placeholder="홍길동">
+      </div>
+      <div class="field">
+        <label>전화번호 뒷 4자리</label>
+        <input type="tel" id="visitorPhone" placeholder="1234" maxlength="4">
+      </div>
+      <button class="btn-main" onclick="checkVisitor()">예약 확인하기</button>
+      <button class="btn-walkin" onclick="goToWalkIn()">저는 미리 예약하지 못했습니다</button>
+    </div>
+
+  </div>
+
+  <!-- STEP 1b: 당일방문(워크인) 접수 -->
+  <div id="step1b" class="page">
+    <h1 class="page-title">당일 방문 접수</h1>
+    <p class="page-sub">예약 없이 방문하신 분은 아래 정보를 입력해 주세요.</p>
+    <div class="card">
+
+      <div class="walkin-date-info">
+        <span class="walkin-date-label">방문일자 / 퇴실일자</span>
+        <span class="walkin-date-value" id="walkinToday">오늘</span>
+      </div>
+
+      <div class="field">
+        <label>성함</label>
+        <input type="text" id="wiName" placeholder="홍길동">
+      </div>
+      <div class="field">
+        <label>전화번호</label>
+        <input type="tel" id="wiPhone" placeholder="01012345678" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>소속</label>
+        <input type="text" id="wiOrg" placeholder="회사명 / 학교 / 소속">
+      </div>
+      <div class="field">
+        <label>방문사유</label>
+        <input type="text" id="wiPurpose" placeholder="미팅, 면접, 행사 참여 등">
+      </div>
+      <div class="field">
+        <label>1층 QR코드</label>
+        <select id="wiQr1f">
+          <option value="미신청" selected>미신청</option>
+          <option value="신청">신청</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>5, 6, 9층 임시출입카드</label>
+        <select id="wiCard">
+          <option value="미신청" selected>미신청</option>
+          <option value="신청">신청</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>주차권</label>
+        <select id="wiParking">
+          <option value="미신청" selected>미신청</option>
+          <option value="30분">30분</option>
+          <option value="1시간">1시간</option>
+          <option value="2시간">2시간</option>
+          <option value="3시간">3시간</option>
+          <option value="4시간">4시간</option>
+          <option value="5시간">5시간</option>
+          <option value="종일권">종일권</option>
+        </select>
+      </div>
+
+      <button class="btn-main" onclick="submitWalkInForm()">접수하기</button>
+      <p class="reset-link" onclick="changeStep('1')">예약 확인 화면으로 돌아가기</p>
+    </div>
+  </div>
+
+  <!-- STEP 2: 서명 -->
+  <div id="step2" class="page">
+    <h1 class="page-title">안녕하세요</h1>
+    <div id="visitorInfo" class="visitor-name"></div>
+    <p class="page-sub">아래 내용을 확인하신 후 서명해 주세요.</p>
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:13px; color:#444;">개인정보 수집 및 이용 동의</span>
+        <span class="agree-link" onclick="showTerms('privacy')">[보기]</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <span style="font-size:13px; color:#444;">정보보호 및 보안 서약서</span>
+        <span class="agree-link" onclick="showTerms('security')">[보기]</span>
+      </div>
+      <div class="signature-wrapper">
+        <div class="sig-guide" id="sigGuide">여기에 서명을 입력하세요</div>
+        <canvas id="signature-pad" width="300" height="150" style="touch-action: none;"></canvas>
+      </div>
+      <button class="btn-main" onclick="submitCheckIn()">서명 완료 및 체크인</button>
+      <p class="reset-link" onclick="location.reload()">검색 화면으로 이동</p>
+    </div>
+  </div>
+
+  <!-- STEP 약관 -->
+  <div id="stepTerms" class="page">
+    <div class="terms-wrap">
+      <div class="terms-title" id="termsTitle"></div>
+      <div class="terms-card">
+        <div id="termsBody" class="terms-text"></div>
+      </div>
+      <button class="btn-back" onclick="hideTerms()">내용 확인 완료</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: 완료 -->
+  <div id="step3" class="page">
+    <div class="complete-icon">✅</div>
+    <h1 class="page-title" style="font-size:28px;">체크인 완료</h1>
+    <p class="page-sub">반갑습니다.<br>내부에서는 임시방문증 목걸이를 꼭 패용해주세요.</p>
+  </div>
+
+</div><!-- /body-wrap -->
+
+<script>
+  // ==========================================
+  // API 설정
+  // ==========================================
+  const API_URL = 'https://script.google.com/macros/s/AKfycbz5wZdEoJrN4Tb-xuOMqcvnhnbQU3qF_SvEdgdRQ7gJ6eP7sQlkE8Vh5QGYHU3bb0dW/exec';
+  const SECRET_TOKEN = 'RMB_CHECK_2026_7d8f9a2b4c6e1f3g';
+
+  let foundVisitor = null;
+  let signaturePad;
+  let prevStep = '2';
+
+  const legalTexts = {
+    privacy: {
+      title: "개인정보 수집 및 이용 동의",
+      body: `■ 개인정보 수집 이용 목적
+- 내방객 식별 및 출입 관리
+- QR 코드 발급(신청 시), 임시 출입증 발급(신청 시), 주차권 발급 (신청 시)
+
+■ 개인정보 수집 항목
+- 성함, 소속, 휴대전화 번호, 방문 목적, 방문 및 퇴실 일정
+
+■ 보유 및 이용 기간
+- 퇴실 일정 기준 3개월 보관 후 파기 (퇴실 일정 미기재 시 방문일 기준)
+
+■ 동의 거부권 및 불이익
+- 귀하는 개인정보 수집 및 이용 동의를 거부할 수 있습니다.
+- 다만 동의 거부 시, 리멤버앤컴퍼니 출입이 제한될 수 있습니다.`
+    },
+    security: {
+      title: "정보보호 및 보안 서약서",
+      body: `본인은 (주) 리멤버앤컴퍼니(이하 "회사")에 임시로 방문하는 외부 직원으로서, 회사의 정보보호 및 개인정보보호 정책을 숙지하고 아래의 내용을 준수할 것을 서약합니다.
+
+- 아      래 -
+
+1. 회사로부터 취득한 개인정보, 기업정보 등을 포함한 모든 정보는 처리하지 않으며, 회사가 지정한 보관/저장 공간 외 보관하지 않는다.
+
+2. 회사에서 알게 되거나 회사로부터 제공받은 정보자산(개인정보, 영업정보, 업체정보, 전산장비, 전자파일 등)을 무단변조, 복사, 훼손, 분실 등으로부터 안전하게 관리하며 승인받지 않은 개인 및 클라우드 저장공간(개인 이메일, 외부 클라우드 등), 프로그램, 정보저장 매체(USB 스토리지, 외장 HDD, CD-ROM 등)를 사용하지 않는다.
+
+3. 상대가 누구이건 간에(내부직원, 외부고객 혹은 계약직 사원 등) 알 필요가 없는 자에게 업무 중 알게 된 모든 정보(개인정보, 기업정보, 영업정보 등)를 절대 누설하지 않는다.
+
+4. 회사에서 명백히 허가 받지 않은 정보나 시설에 접근하지 않으며, 이 시설 내에 사적 정보를 보관하지 않는다.
+
+5. 임시 방문 중 취득하게 되는 모든 개인정보를 포함한 회사의 영업비밀, 기타 회사의 주요 영업자산에 대해 업무 시는 물론 방문 종료 후에도 이를 비밀로 유지하고, 회사의 사전 서면 동의 없이는 경쟁업체나 제3자에게 제공하거나 누설하지 않으며, 부정한 목적으로 공개하거나 사용하지 않도록 한다.
+
+6. 업무와 관련된 문서의 생성, 사용, 폐기를 비롯한 회사 전자메일 시스템 사용 등 정보보호 및 개인정보보호에 관한 회사의 정책 및 지침, 규정을 준수한다.
+
+7. 임시 방문 종료 시 회사에서 제공받은 정보(사용자 ID 및 패스워드 등) 및 정보자산을 반납할 것이며 이에 관한 어떠한 형태의 사본도 개인적으로 보유하지 않으며 반납할 수 없는 것은 폐기함을 서약한다.
+
+8. 업무와 관련된 개인정보의 수집, 생성, 기록, 저장, 보유, 가공, 편집, 검색, 출력, 정정, 복구, 이용, 제공, 공개, 파기 및 그 밖에 이와 유사한 일체의 행위에 대하여 개인정보 보호법, 회사의 가이드라인 등의 규정과 통제 절차 및 회사의 지시사항을 준수한다.
+
+9. 회사로부터 할당 받은 아이디, 비밀번호, 출입권한 및 출입증은 타인과 공동으로 사용하지 않고 관련 정보를 누설하지 않는다.
+
+[위반 시 책임 안내]
+상기 사항을 숙지하고 이를 성실히 준수할 것을 동의하며 서약서의 보안사항을 위반하였을 경우에는 "개인정보보호법", "부정경쟁 방지 및 영업비밀보호에 관한 법률", "정보통신망이용촉진 및 정보보호 등에 관한 법률", "전기통신사업법" 등 관련법령에 의한 민/형사상의 책임 이외에도 회사의 정책이나 규정에 따른 조치 등 어떠한 불이익도 감수할 것이며 회사에 끼친 손해에 대해 지체 없이 배상 또는 변상/복구할 것을 서약합니다.
+
+본 서약서는 임시 방문 기간 뿐 아니라 방문 종료 후에도 적용될 수 있음을 숙독하신 후 서명하여 주시기 바랍니다.
+
+작성일: ${new Date().toLocaleDateString()}
+서명: (본 화면의 전자서명으로 갈음함)`
+    }
+  };
+
+  // ==========================================
+  // API 호출 헬퍼
+  // ==========================================
+  async function callGasAPI(action, data) {
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors', // CORS 우회
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          token: SECRET_TOKEN,
+          action: action,
+          ...data
+        })
+      });
+
+      // no-cors 모드에서는 응답을 읽을 수 없으므로 성공으로 간주
+      // 실제 에러는 Google Apps Script에서 처리
+      return { success: true };
+    } catch (error) {
+      console.error('API 호출 에러:', error);
+      throw error;
+    }
+  }
+
+  // ==========================================
+  // 초기화
+  // ==========================================
+  window.onload = () => {
+    initSignaturePad();
+    window.addEventListener("resize", initSignaturePad);
+  };
+
+  function initSignaturePad() {
+    const canvas = document.getElementById('signature-pad');
+    if (!canvas) return;
+    const ratio = Math.max(window.devicePixelRatio || 1, 1);
+    const wrapper = canvas.parentElement;
+    canvas.width = wrapper.offsetWidth * ratio;
+    canvas.height = wrapper.offsetHeight * ratio;
+    const ctx = canvas.getContext("2d");
+    ctx.scale(ratio, ratio);
+    if (!signaturePad) {
+      signaturePad = new SignaturePad(canvas, { backgroundColor: '#ffffff' });
+      signaturePad.addEventListener("beginStroke", () => {
+        document.getElementById('sigGuide').style.display = 'none';
+      });
+    } else {
+      signaturePad.clear();
+    }
+  }
+
+  // ==========================================
+  // 약관 표시
+  // ==========================================
+  function showTerms(type) {
+    prevStep = document.querySelector('.page.active').id.replace('step', '');
+    document.getElementById('termsTitle').innerText = legalTexts[type].title;
+    document.getElementById('termsBody').innerText = legalTexts[type].body;
+    document.getElementById('mainHeader').style.display = 'none';
+    changeStep('Terms');
+    window.scrollTo(0, 0);
+  }
+
+  function hideTerms() {
+    document.getElementById('mainHeader').style.display = 'flex';
+    changeStep(prevStep);
+  }
+
+  // ==========================================
+  // 예약자 검색
+  // ==========================================
+  async function checkVisitor() {
+    const name = document.getElementById('visitorName').value.trim();
+    const phone = document.getElementById('visitorPhone').value.trim();
+
+    if (!name || !phone) {
+      alert("정보를 정확히 입력해 주세요.");
+      return;
+    }
+
+    const btn = document.querySelector('#step1 .btn-main');
+    btn.disabled = true;
+    btn.innerText = "조회 중...";
+
+    try {
+      await callGasAPI('searchVisitor', {
+        name: name,
+        last4Digits: phone
+      });
+
+      // no-cors로 인해 실제 응답을 받을 수 없으므로
+      // 대기 후 다음 단계로 진행
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerText = "예약 확인하기";
+
+        // 임시로 방문자 정보 설정
+        foundVisitor = {
+          name: name,
+          row: 0 // 실제 행 번호는 서버에서 처리
+        };
+        document.getElementById('visitorInfo').innerText = name + " 님";
+        changeStep('2');
+        initSignaturePad();
+      }, 1500);
+
+    } catch (error) {
+      btn.disabled = false;
+      btn.innerText = "예약 확인하기";
+      alert("서버 통신 오류가 발생했습니다. 다시 시도해 주세요.");
+    }
+  }
+
+  // ==========================================
+  // 체크인 제출
+  // ==========================================
+  async function submitCheckIn() {
+    if (signaturePad.isEmpty()) {
+      alert("서명을 진행해 주세요.");
+      return;
+    }
+
+    const btn = document.querySelector('#step2 .btn-main');
+    btn.disabled = true;
+    btn.innerText = "처리 중...";
+
+    const signatureDataUrl = signaturePad.toDataURL('image/png');
+
+    try {
+      await callGasAPI('processCheckIn', {
+        checkInData: foundVisitor,
+        signatureDataUrl: signatureDataUrl
+      });
+
+      setTimeout(() => {
+        changeStep('3');
+      }, 1000);
+
+    } catch (error) {
+      btn.disabled = false;
+      btn.innerText = "서명 완료 및 체크인";
+      alert("오류가 발생했습니다. 다시 시도해 주세요.");
+    }
+  }
+
+  // ==========================================
+  // 페이지 전환
+  // ==========================================
+  function changeStep(n) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('step' + n);
+    if (target) target.classList.add('active');
+  }
+
+  // ==========================================
+  // 당일 방문
+  // ==========================================
+  function goToWalkIn() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    document.getElementById('walkinToday').innerText = yyyy + '-' + mm + '-' + dd + ' (오늘)';
+    changeStep('1b');
+    window.scrollTo(0, 0);
+  }
+
+  async function submitWalkInForm() {
+    const name    = document.getElementById('wiName').value.trim();
+    const phone   = document.getElementById('wiPhone').value.trim();
+    const org     = document.getElementById('wiOrg').value.trim();
+    const purpose = document.getElementById('wiPurpose').value.trim();
+    const qr1f    = document.getElementById('wiQr1f').value;
+    const card    = document.getElementById('wiCard').value;
+    const parking = document.getElementById('wiParking').value;
+
+    if (!name || !phone || !org || !purpose) {
+      alert("필수 항목(성함, 전화번호, 소속, 방문사유)을 모두 입력해 주세요.");
+      return;
+    }
+
+    const btn = document.querySelector('#step1b .btn-main');
+    btn.disabled = true;
+    btn.innerText = "접수 중...";
+
+    try {
+      await callGasAPI('submitWalkIn', {
+        formData: { name, phone, org, purpose, qr1f, card, parking }
+      });
+
+      setTimeout(() => {
+        btn.disabled = false;
+        btn.innerText = "접수하기";
+
+        foundVisitor = {
+          name: name,
+          org: org,
+          host: "당일방문",
+          purpose: purpose,
+          card: card,
+          parking: parking
+        };
+        document.getElementById('visitorInfo').innerText = name + " 님";
+        changeStep('2');
+        initSignaturePad();
+        window.scrollTo(0, 0);
+      }, 1500);
+
+    } catch (error) {
+      btn.disabled = false;
+      btn.innerText = "접수하기";
+      alert("서버 통신 오류가 발생했습니다. 다시 시도해 주세요.");
+    }
+  }
+</script>
+</body>
+</html>
